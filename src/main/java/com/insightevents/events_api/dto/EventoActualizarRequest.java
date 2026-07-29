@@ -1,12 +1,14 @@
 package com.insightevents.events_api.dto;
 
-import com.insightevents.events_api.domain.enums.EstadoEvento;
 import com.insightevents.events_api.domain.enums.Prioridad;
 import jakarta.validation.constraints.Size;
 
 /**
  * Datos para actualizar un evento. Todos los campos son opcionales:
  * solo se modifican los que vengan con valor (actualizacion parcial).
+ *
+ * Nota: el estado NO se actualiza aqui a proposito. Las transiciones de estado
+ * las controlan acciones dedicadas (asignar, resolver, cancelar).
  */
 public record EventoActualizarRequest(
 
@@ -17,8 +19,6 @@ public record EventoActualizarRequest(
         String descripcion,
 
         Prioridad prioridad,
-
-        EstadoEvento estado,
 
         @Size(max = 150, message = "La fuente no puede superar 150 caracteres")
         String fuente,

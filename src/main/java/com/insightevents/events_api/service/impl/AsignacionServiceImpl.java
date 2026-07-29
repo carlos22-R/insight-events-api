@@ -43,10 +43,12 @@ public class AsignacionServiceImpl implements AsignacionService {
         } catch (RuntimeException ex) {
             traducirError(ex, eventoId, analistaId);   // lanza la excepcion de negocio adecuada
         }
-        // Recuperamos la asignacion recien creada para devolverla
-        return repository.findByEventoIdAndAnalistaId(eventoId, analistaId)
-                .map(mapper::toResponse)
+        // Recuperamos la asignacion recien creada
+        Asignacion creada = repository.findByEventoIdAndAnalistaId(eventoId, analistaId)
                 .orElseThrow(() -> new IllegalStateException("No se encontro la asignacion recien creada"));
+        // Al asignar, el evento pasa a EN_INVESTIGACION (alguien lo esta investigando)
+        creada.getEvento().setEstado(EstadoEvento.EN_INVESTIGACION);
+        return mapper.toResponse(creada);
     }
 
     @Override
@@ -61,21 +63,21 @@ public class AsignacionServiceImpl implements AsignacionService {
 
         Evento evento = asignacion.getEvento();
 
-        // Al cerrar el evento, TODAS sus asignaciones activas se finalizan
-        // (incluida la que resuelve el analista). Asi no quedan asignaciones
-        // activas sobre un evento cerrado.
+        // Al resolver el evento, TODAS sus asignaciones activas se finalizan
+        // (incluida la del analista). Asi no quedan asignaciones activas sobre
+        // un evento ya resuelto.
         List<Asignacion> activas =
                 repository.findByEventoIdAndEstado(eventoId, EstadoAsignacion.ACTIVA);
         activas.forEach(a -> a.setEstado(EstadoAsignacion.FINALIZADA));
         asignacion.setEstado(EstadoAsignacion.FINALIZADA);   // por si no estaba activa
-        evento.setEstado(EstadoEvento.CERRADO);
+        evento.setEstado(EstadoEvento.RESUELTO);
 
         long otras = activas.stream().filter(a -> !a.getId().equals(asignacionId)).count();
         String comentario = otras > 0
-                ? "Evento cerrado (resuelto por %s); %d asignacion(es) de otros analistas finalizada(s) automaticamente"
+                ? "Evento resuelto por %s; %d asignacion(es) de otros analistas finalizada(s) automaticamente"
                         .formatted(usuario, otras)
-                : "Evento cerrado (resuelto por %s)".formatted(usuario);
-        // El historial guarda en 'usuario' QUIEN cerro el evento
+                : "Evento resuelto por %s".formatted(usuario);
+        // El historial guarda en 'usuario' QUIEN resolvio el evento
         registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO, comentario);
 
         return mapper.toResponse(asignacion);

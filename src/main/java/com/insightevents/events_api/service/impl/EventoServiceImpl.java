@@ -55,21 +55,12 @@ public class EventoServiceImpl implements EventoService {
     @Transactional
     public EventoResponse actualizar(Long id, EventoActualizarRequest request, String usuario) {
         Evento evento = buscarActivoOFallar(id);
-        EstadoEvento estadoAnterior = evento.getEstado();   // para detectar cambio de estado
-
         // Solo resolvemos categoria nueva si el cliente la envio
         Categoria nuevaCategoria =
                 request.categoriaId() != null ? resolverCategoria(request.categoriaId()) : null;
+        // El estado NO se toca aqui: lo controlan asignar/resolver/cancelar
         mapper.updateEntity(evento, request, nuevaCategoria);
-        // Dirty checking: no hace falta save()
-
-        // Si cambio el estado, lo registramos como CAMBIO_ESTADO; si no, ACTUALIZACION
-        if (request.estado() != null && request.estado() != estadoAnterior) {
-            registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO,
-                    "Estado: %s -> %s".formatted(estadoAnterior, evento.getEstado()));
-        } else {
-            registroHistorial.registrar(evento, usuario, TipoAccion.ACTUALIZACION, "Evento actualizado");
-        }
+        registroHistorial.registrar(evento, usuario, TipoAccion.ACTUALIZACION, "Evento actualizado");
         return mapper.toResponse(evento);
     }
 

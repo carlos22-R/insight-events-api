@@ -41,7 +41,6 @@ public class EventoMapper {
         if (dto.titulo() != null)      e.setTitulo(dto.titulo());
         if (dto.descripcion() != null) e.setDescripcion(dto.descripcion());
         if (dto.prioridad() != null)   e.setPrioridad(dto.prioridad());
-        if (dto.estado() != null)      e.setEstado(dto.estado());
         if (dto.fuente() != null)      e.setFuente(dto.fuente());
         if (nuevaCategoria != null)    e.setCategoria(nuevaCategoria);
     }
