@@ -54,12 +54,17 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     long siguienteValorCodigo();
 
     /**
-     * JPQL: eventos activos que no tienen ninguna asignacion activa
-     * (nadie los esta investigando). Usa NOT EXISTS sobre Asignacion.
+     * JPQL: eventos abiertos (NUEVO o EN_INVESTIGACION) que no tienen ninguna
+     * asignacion activa, es decir, pendientes de que alguien los tome. Excluye
+     * los ya RESUELTO o DESCARTADO, que no requieren asignacion.
      */
     @Query("""
             SELECT e FROM Evento e
             WHERE e.activo = true
+              AND e.estado IN (
+                  com.insightevents.events_api.domain.enums.EstadoEvento.NUEVO,
+                  com.insightevents.events_api.domain.enums.EstadoEvento.EN_INVESTIGACION
+              )
               AND NOT EXISTS (
                   SELECT 1 FROM Asignacion a
                   WHERE a.evento = e
