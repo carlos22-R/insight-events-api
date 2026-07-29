@@ -4,9 +4,11 @@ import com.insightevents.events_api.domain.Analista;
 import com.insightevents.events_api.dto.AnalistaRequest;
 import com.insightevents.events_api.dto.AnalistaResponse;
 import com.insightevents.events_api.exception.RecursoDuplicadoException;
+import com.insightevents.events_api.exception.RecursoEnUsoException;
 import com.insightevents.events_api.exception.RecursoNoEncontradoException;
 import com.insightevents.events_api.mapper.AnalistaMapper;
 import com.insightevents.events_api.repository.AnalistaRepository;
+import com.insightevents.events_api.repository.AsignacionRepository;
 import com.insightevents.events_api.service.AnalistaService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnalistaServiceImpl implements AnalistaService {
 
     private final AnalistaRepository repository;
+    private final AsignacionRepository asignacionRepository;
     private final AnalistaMapper mapper;
 
     @Override
@@ -63,6 +66,11 @@ public class AnalistaServiceImpl implements AnalistaService {
     @Transactional
     public void eliminar(Long id) {
         Analista analista = buscarOFallar(id);
+        // Integridad (RESTRICT): no borrar un analista con asignaciones
+        if (asignacionRepository.existsByAnalistaId(id)) {
+            throw new RecursoEnUsoException(
+                    "No se puede eliminar el analista: tiene asignaciones asociadas");
+        }
         repository.delete(analista);
     }
 
