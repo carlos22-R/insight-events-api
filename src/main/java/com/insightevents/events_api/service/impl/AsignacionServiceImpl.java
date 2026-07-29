@@ -13,6 +13,7 @@ import com.insightevents.events_api.repository.AsignacionRepository;
 import com.insightevents.events_api.service.AsignacionService;
 import com.insightevents.events_api.service.RegistroHistorial;
 import java.sql.SQLException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,13 +58,26 @@ public class AsignacionServiceImpl implements AsignacionService {
         if (!asignacion.getEvento().getId().equals(eventoId)) {
             throw new RecursoNoEncontradoException("Asignacion", asignacionId);
         }
-        // Al resolver: asignacion -> FINALIZADA y el evento -> CERRADO
-        asignacion.setEstado(EstadoAsignacion.FINALIZADA);
+
         Evento evento = asignacion.getEvento();
+
+        // Al cerrar el evento, TODAS sus asignaciones activas se finalizan
+        // (incluida la que resuelve el analista). Asi no quedan asignaciones
+        // activas sobre un evento cerrado.
+        List<Asignacion> activas =
+                repository.findByEventoIdAndEstado(eventoId, EstadoAsignacion.ACTIVA);
+        activas.forEach(a -> a.setEstado(EstadoAsignacion.FINALIZADA));
+        asignacion.setEstado(EstadoAsignacion.FINALIZADA);   // por si no estaba activa
         evento.setEstado(EstadoEvento.CERRADO);
-        registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO,
-                "Evento cerrado tras resolver la asignacion del analista "
-                        + asignacion.getAnalista().getNombre());
+
+        long otras = activas.stream().filter(a -> !a.getId().equals(asignacionId)).count();
+        String comentario = otras > 0
+                ? "Evento cerrado (resuelto por %s); %d asignacion(es) de otros analistas finalizada(s) automaticamente"
+                        .formatted(usuario, otras)
+                : "Evento cerrado (resuelto por %s)".formatted(usuario);
+        // El historial guarda en 'usuario' QUIEN cerro el evento
+        registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO, comentario);
+
         return mapper.toResponse(asignacion);
     }
 
