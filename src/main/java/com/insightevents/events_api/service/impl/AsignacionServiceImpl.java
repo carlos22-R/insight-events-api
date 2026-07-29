@@ -1,11 +1,17 @@
 package com.insightevents.events_api.service.impl;
 
+import com.insightevents.events_api.domain.Asignacion;
+import com.insightevents.events_api.domain.Evento;
+import com.insightevents.events_api.domain.enums.EstadoAsignacion;
+import com.insightevents.events_api.domain.enums.EstadoEvento;
+import com.insightevents.events_api.domain.enums.TipoAccion;
 import com.insightevents.events_api.dto.AsignacionResponse;
 import com.insightevents.events_api.exception.RecursoDuplicadoException;
 import com.insightevents.events_api.exception.RecursoNoEncontradoException;
 import com.insightevents.events_api.mapper.AsignacionMapper;
 import com.insightevents.events_api.repository.AsignacionRepository;
 import com.insightevents.events_api.service.AsignacionService;
+import com.insightevents.events_api.service.RegistroHistorial;
 import java.sql.SQLException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +32,7 @@ public class AsignacionServiceImpl implements AsignacionService {
 
     private final AsignacionRepository repository;
     private final AsignacionMapper mapper;
+    private final RegistroHistorial registroHistorial;
 
     @Override
     @Transactional
@@ -39,6 +46,25 @@ public class AsignacionServiceImpl implements AsignacionService {
         return repository.findByEventoIdAndAnalistaId(eventoId, analistaId)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new IllegalStateException("No se encontro la asignacion recien creada"));
+    }
+
+    @Override
+    @Transactional
+    public AsignacionResponse resolver(Long eventoId, Long asignacionId, String usuario) {
+        Asignacion asignacion = repository.findById(asignacionId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Asignacion", asignacionId));
+        // La asignacion debe pertenecer al evento indicado en la URL
+        if (!asignacion.getEvento().getId().equals(eventoId)) {
+            throw new RecursoNoEncontradoException("Asignacion", asignacionId);
+        }
+        // Al resolver: asignacion -> FINALIZADA y el evento -> CERRADO
+        asignacion.setEstado(EstadoAsignacion.FINALIZADA);
+        Evento evento = asignacion.getEvento();
+        evento.setEstado(EstadoEvento.CERRADO);
+        registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO,
+                "Evento cerrado tras resolver la asignacion del analista "
+                        + asignacion.getAnalista().getNombre());
+        return mapper.toResponse(asignacion);
     }
 
     /** Traduce el SQLSTATE del stored procedure a la excepcion HTTP correcta. */

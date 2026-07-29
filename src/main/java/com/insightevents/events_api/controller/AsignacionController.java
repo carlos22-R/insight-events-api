@@ -34,4 +34,13 @@ public class AsignacionController {
                 service.asignar(eventoId, request.analistaId(), usuario, request.comentario());
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
+
+    /** Resuelve una asignacion: la asignacion pasa a FINALIZADA y el evento a CERRADO. */
+    @PostMapping("/{asignacionId}/resolver")
+    public AsignacionResponse resolver(
+            @PathVariable Long eventoId,
+            @PathVariable Long asignacionId,
+            @RequestHeader(value = "X-Usuario", defaultValue = "sistema") String usuario) {
+        return service.resolver(eventoId, asignacionId, usuario);
+    }
 }

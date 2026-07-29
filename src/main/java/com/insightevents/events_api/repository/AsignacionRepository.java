@@ -1,6 +1,7 @@
 package com.insightevents.events_api.repository;
 
 import com.insightevents.events_api.domain.Asignacion;
+import com.insightevents.events_api.domain.enums.EstadoAsignacion;
 import com.insightevents.events_api.repository.projection.CargaAnalistaProjection;
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,9 @@ public interface AsignacionRepository extends JpaRepository<Asignacion, Long> {
 
     /** Recupera la asignacion recien creada para devolverla en la respuesta. */
     Optional<Asignacion> findByEventoIdAndAnalistaId(Long eventoId, Long analistaId);
+
+    /** Asignaciones de un evento en un estado dado (p.ej. las ACTIVA al cancelar). */
+    List<Asignacion> findByEventoIdAndEstado(Long eventoId, EstadoAsignacion estado);
 
     /**
      * SQL nativo: carga de trabajo por analista (asignaciones activas).

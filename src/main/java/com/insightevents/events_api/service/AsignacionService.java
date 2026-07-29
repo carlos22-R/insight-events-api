@@ -12,4 +12,9 @@ public interface AsignacionService {
      * @param usuario responsable de la accion (para el historial)
      */
     AsignacionResponse asignar(Long eventoId, Long analistaId, String usuario, String comentario);
+
+    /**
+     * Resuelve una asignacion: la asignacion pasa a FINALIZADA y su evento a CERRADO.
+     */
+    AsignacionResponse resolver(Long eventoId, Long asignacionId, String usuario);
 }

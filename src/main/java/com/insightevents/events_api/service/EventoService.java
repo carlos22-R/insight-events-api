@@ -28,4 +28,7 @@ public interface EventoService {
 
     /** Borrado logico (soft delete): marca activo = false. */
     void eliminar(Long id, String usuario);
+
+    /** Cancela el evento: pasa a DESCARTADO y sus asignaciones activas a CANCELADA. */
+    EventoResponse cancelar(Long id, String usuario);
 }

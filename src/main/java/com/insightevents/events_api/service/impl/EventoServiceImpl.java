@@ -1,8 +1,9 @@
 package com.insightevents.events_api.service.impl;
 
+import com.insightevents.events_api.domain.Asignacion;
 import com.insightevents.events_api.domain.Categoria;
 import com.insightevents.events_api.domain.Evento;
-import com.insightevents.events_api.domain.HistorialEvento;
+import com.insightevents.events_api.domain.enums.EstadoAsignacion;
 import com.insightevents.events_api.domain.enums.EstadoEvento;
 import com.insightevents.events_api.domain.enums.Prioridad;
 import com.insightevents.events_api.domain.enums.TipoAccion;
@@ -12,11 +13,13 @@ import com.insightevents.events_api.dto.EventoResponse;
 import com.insightevents.events_api.dto.PaginaResponse;
 import com.insightevents.events_api.exception.RecursoNoEncontradoException;
 import com.insightevents.events_api.mapper.EventoMapper;
+import com.insightevents.events_api.repository.AsignacionRepository;
 import com.insightevents.events_api.repository.CategoriaRepository;
 import com.insightevents.events_api.repository.EventoRepository;
-import com.insightevents.events_api.repository.HistorialEventoRepository;
 import com.insightevents.events_api.service.EventoService;
+import com.insightevents.events_api.service.RegistroHistorial;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +35,8 @@ public class EventoServiceImpl implements EventoService {
 
     private final EventoRepository repository;
     private final CategoriaRepository categoriaRepository;
-    private final HistorialEventoRepository historialRepository;
+    private final AsignacionRepository asignacionRepository;
+    private final RegistroHistorial registroHistorial;
     private final EventoMapper mapper;
 
     @Override
@@ -42,7 +46,7 @@ public class EventoServiceImpl implements EventoService {
         Evento evento = mapper.toEntity(request, categoria);
         evento.setCodigo(generarCodigo());
         Evento guardado = repository.save(evento);
-        registrarHistorial(guardado, usuario, TipoAccion.CREACION,
+        registroHistorial.registrar(guardado, usuario, TipoAccion.CREACION,
                 "Evento creado con codigo " + guardado.getCodigo());
         return mapper.toResponse(guardado);
     }
@@ -61,10 +65,10 @@ public class EventoServiceImpl implements EventoService {
 
         // Si cambio el estado, lo registramos como CAMBIO_ESTADO; si no, ACTUALIZACION
         if (request.estado() != null && request.estado() != estadoAnterior) {
-            registrarHistorial(evento, usuario, TipoAccion.CAMBIO_ESTADO,
+            registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO,
                     "Estado: %s -> %s".formatted(estadoAnterior, evento.getEstado()));
         } else {
-            registrarHistorial(evento, usuario, TipoAccion.ACTUALIZACION, "Evento actualizado");
+            registroHistorial.registrar(evento, usuario, TipoAccion.ACTUALIZACION, "Evento actualizado");
         }
         return mapper.toResponse(evento);
     }
@@ -94,22 +98,25 @@ public class EventoServiceImpl implements EventoService {
     public void eliminar(Long id, String usuario) {
         Evento evento = buscarActivoOFallar(id);
         evento.setActivo(false);   // borrado logico (soft delete)
-        registrarHistorial(evento, usuario, TipoAccion.ELIMINACION,
-                "Evento marcado como eliminado ");
+        registroHistorial.registrar(evento, usuario, TipoAccion.ELIMINACION,
+                "Evento marcado como eliminado (baja logica)");
+    }
+
+    @Override
+    @Transactional
+    public EventoResponse cancelar(Long id, String usuario) {
+        Evento evento = buscarActivoOFallar(id);
+        evento.setEstado(EstadoEvento.DESCARTADO);
+        // Al cancelar el evento, sus asignaciones activas pasan a CANCELADA
+        List<Asignacion> activas =
+                asignacionRepository.findByEventoIdAndEstado(id, EstadoAsignacion.ACTIVA);
+        activas.forEach(a -> a.setEstado(EstadoAsignacion.CANCELADA));
+        registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO,
+                "Evento cancelado (DESCARTADO); %d asignacion(es) cancelada(s)".formatted(activas.size()));
+        return mapper.toResponse(evento);
     }
 
     /* ===================== helpers ===================== */
-
-    /** Registra una accion en el historial del evento. */
-    private void registrarHistorial(Evento evento, String usuario, TipoAccion accion, String comentario) {
-        HistorialEvento h = new HistorialEvento();
-        h.setEvento(evento);
-        h.setUsuario(usuario != null && !usuario.isBlank() ? usuario : "sistema");
-        h.setFecha(LocalDateTime.now());
-        h.setAccion(accion);
-        h.setComentario(comentario);
-        historialRepository.save(h);
-    }
 
     /** Genera el codigo legible EVT-000001 usando la secuencia de la BD. */
     private String generarCodigo() {

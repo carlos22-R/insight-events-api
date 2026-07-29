@@ -87,4 +87,11 @@ public class EventoController {
                          @RequestHeader(value = "X-Usuario", defaultValue = "sistema") String usuario) {
         service.eliminar(id, usuario);
     }
+
+    /** Cancela el evento (DESCARTADO) y cancela sus asignaciones activas. */
+    @PostMapping("/{id}/cancelar")
+    public EventoResponse cancelar(@PathVariable Long id,
+                                   @RequestHeader(value = "X-Usuario", defaultValue = "sistema") String usuario) {
+        return service.cancelar(id, usuario);
+    }
 }
