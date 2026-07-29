@@ -32,6 +32,9 @@ public interface AsignacionRepository extends JpaRepository<Asignacion, Long> {
     /** Asignaciones de un evento en un estado dado (p.ej. las ACTIVA al cancelar). */
     List<Asignacion> findByEventoIdAndEstado(Long eventoId, EstadoAsignacion estado);
 
+    /** Todas las asignaciones de un evento (para listarlas con su id). */
+    List<Asignacion> findByEventoId(Long eventoId);
+
     /**
      * SQL nativo: carga de trabajo por analista (asignaciones activas).
      * LEFT JOIN para incluir tambien a los analistas con 0 asignaciones.

@@ -6,6 +6,7 @@ import com.insightevents.events_api.domain.enums.EstadoAsignacion;
 import com.insightevents.events_api.domain.enums.EstadoEvento;
 import com.insightevents.events_api.domain.enums.TipoAccion;
 import com.insightevents.events_api.dto.AsignacionResponse;
+import com.insightevents.events_api.dto.PaginaResponse;
 import com.insightevents.events_api.exception.RecursoDuplicadoException;
 import com.insightevents.events_api.exception.RecursoNoEncontradoException;
 import com.insightevents.events_api.mapper.AsignacionMapper;
@@ -15,6 +16,7 @@ import com.insightevents.events_api.service.RegistroHistorial;
 import java.sql.SQLException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,6 +83,20 @@ public class AsignacionServiceImpl implements AsignacionService {
         registroHistorial.registrar(evento, usuario, TipoAccion.CAMBIO_ESTADO, comentario);
 
         return mapper.toResponse(asignacion);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AsignacionResponse> listarPorEvento(Long eventoId) {
+        return repository.findByEventoId(eventoId).stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PaginaResponse<AsignacionResponse> listarTodas(Pageable pageable) {
+        return PaginaResponse.de(repository.findAll(pageable).map(mapper::toResponse));
     }
 
     /** Traduce el SQLSTATE del stored procedure a la excepcion HTTP correcta. */

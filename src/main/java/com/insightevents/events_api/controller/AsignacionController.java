@@ -4,9 +4,11 @@ import com.insightevents.events_api.dto.AsignacionResponse;
 import com.insightevents.events_api.dto.AsignarEventoRequest;
 import com.insightevents.events_api.service.AsignacionService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +25,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class AsignacionController {
 
     private final AsignacionService service;
+
+    /** Lista las asignaciones del evento (con su id, para poder resolverlas). */
+    @GetMapping
+    public List<AsignacionResponse> listar(@PathVariable Long eventoId) {
+        return service.listarPorEvento(eventoId);
+    }
 
     /** Asigna el evento a un analista. El usuario responsable va en X-Usuario. */
     @PostMapping
