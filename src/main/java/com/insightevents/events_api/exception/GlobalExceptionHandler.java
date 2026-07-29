@@ -3,11 +3,13 @@ package com.insightevents.events_api.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
  * Manejador global de errores. Centraliza en un solo lugar la traduccion
@@ -29,6 +31,32 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> duplicado(RecursoDuplicadoException ex, HttpServletRequest req) {
         ApiError body = ApiError.de(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), req.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /** Recurso con dependientes (no se puede borrar) -> 409 Conflict. */
+    @ExceptionHandler(RecursoEnUsoException.class)
+    public ResponseEntity<ApiError> enUso(RecursoEnUsoException ex, HttpServletRequest req) {
+        ApiError body = ApiError.de(HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage(), req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /**
+     * Red de seguridad: cualquier violacion de integridad de la BD (FK, unique)
+     * que se escape de las validaciones de negocio -> 409 en vez de un 500.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> integridad(DataIntegrityViolationException ex, HttpServletRequest req) {
+        ApiError body = ApiError.de(HttpStatus.CONFLICT.value(), "Conflict",
+                "La operacion viola una restriccion de integridad de datos", req.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /** Parametro con tipo invalido (p.ej. un enum mal escrito en la URL) -> 400. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> tipoInvalido(MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
+        String msg = "Valor invalido '%s' para el parametro '%s'".formatted(ex.getValue(), ex.getName());
+        ApiError body = ApiError.de(HttpStatus.BAD_REQUEST.value(), "Bad Request", msg, req.getRequestURI());
+        return ResponseEntity.badRequest().body(body);
     }
 
     /** Fallo de validacion de Bean Validation (@Valid) -> 400 Bad Request. */

@@ -4,9 +4,11 @@ import com.insightevents.events_api.domain.Categoria;
 import com.insightevents.events_api.dto.CategoriaRequest;
 import com.insightevents.events_api.dto.CategoriaResponse;
 import com.insightevents.events_api.exception.RecursoDuplicadoException;
+import com.insightevents.events_api.exception.RecursoEnUsoException;
 import com.insightevents.events_api.exception.RecursoNoEncontradoException;
 import com.insightevents.events_api.mapper.CategoriaMapper;
 import com.insightevents.events_api.repository.CategoriaRepository;
+import com.insightevents.events_api.repository.EventoRepository;
 import com.insightevents.events_api.service.CategoriaService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CategoriaServiceImpl implements CategoriaService {
 
     private final CategoriaRepository repository;
+    private final EventoRepository eventoRepository;
     private final CategoriaMapper mapper;
 
     @Override
@@ -66,6 +69,11 @@ public class CategoriaServiceImpl implements CategoriaService {
     @Transactional
     public void eliminar(Long id) {
         Categoria categoria = buscarOFallar(id);
+        // Integridad (RESTRICT): no borrar una categoria con eventos asociados
+        if (eventoRepository.existsByCategoriaId(id)) {
+            throw new RecursoEnUsoException(
+                    "No se puede eliminar la categoria: tiene eventos asociados");
+        }
         repository.delete(categoria);
     }
 
