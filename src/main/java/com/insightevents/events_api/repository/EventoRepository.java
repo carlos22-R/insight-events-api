@@ -4,6 +4,7 @@ import com.insightevents.events_api.domain.Evento;
 import com.insightevents.events_api.domain.enums.EstadoEvento;
 import com.insightevents.events_api.domain.enums.Prioridad;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -51,4 +52,20 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
     /** SQL nativo: obtiene el siguiente valor de la secuencia del codigo. */
     @Query(value = "SELECT nextval('evento_codigo_seq')", nativeQuery = true)
     long siguienteValorCodigo();
+
+    /**
+     * JPQL: eventos activos que no tienen ninguna asignacion activa
+     * (nadie los esta investigando). Usa NOT EXISTS sobre Asignacion.
+     */
+    @Query("""
+            SELECT e FROM Evento e
+            WHERE e.activo = true
+              AND NOT EXISTS (
+                  SELECT 1 FROM Asignacion a
+                  WHERE a.evento = e
+                    AND a.estado = com.insightevents.events_api.domain.enums.EstadoAsignacion.ACTIVA
+              )
+            ORDER BY e.fecha ASC
+            """)
+    List<Evento> eventosSinAsignar();
 }
