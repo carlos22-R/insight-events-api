@@ -2,7 +2,10 @@ package com.insightevents.events_api.service;
 
 import com.insightevents.events_api.dto.AnalistaRequest;
 import com.insightevents.events_api.dto.AnalistaResponse;
+import com.insightevents.events_api.dto.EventoResponse;
+import com.insightevents.events_api.dto.PaginaResponse;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Contrato del servicio de analistas.
@@ -18,4 +21,7 @@ public interface AnalistaService {
     List<AnalistaResponse> listar();
 
     void eliminar(Long id);
+
+    /** Eventos activos asignados a un analista, paginados. */
+    PaginaResponse<EventoResponse> eventosAsignados(Long analistaId, Pageable pageable);
 }

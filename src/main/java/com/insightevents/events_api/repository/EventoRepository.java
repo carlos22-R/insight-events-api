@@ -68,4 +68,20 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
             ORDER BY e.fecha ASC
             """)
     List<Evento> eventosSinAsignar();
+
+    /**
+     * JPQL: eventos activos asignados (asignacion activa) a un analista, paginados.
+     * Con raiz en Evento para que la paginacion/ordenamiento use sus propiedades.
+     */
+    @Query("""
+            SELECT e FROM Evento e
+            WHERE e.activo = true
+              AND EXISTS (
+                  SELECT 1 FROM Asignacion a
+                  WHERE a.evento = e
+                    AND a.analista.id = :analistaId
+                    AND a.estado = com.insightevents.events_api.domain.enums.EstadoAsignacion.ACTIVA
+              )
+            """)
+    Page<Evento> eventosAsignadosAAnalista(@Param("analistaId") Long analistaId, Pageable pageable);
 }

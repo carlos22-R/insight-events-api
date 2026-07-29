@@ -2,11 +2,17 @@ package com.insightevents.events_api.controller;
 
 import com.insightevents.events_api.dto.AnalistaRequest;
 import com.insightevents.events_api.dto.AnalistaResponse;
+import com.insightevents.events_api.dto.EventoResponse;
+import com.insightevents.events_api.dto.PaginaResponse;
 import com.insightevents.events_api.service.AnalistaService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -56,5 +62,14 @@ public class AnalistaController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminar(@PathVariable Long id) {
         service.eliminar(id);
+    }
+
+    /** Eventos activos asignados a un analista (paginado). */
+    @GetMapping("/{id}/eventos")
+    public PaginaResponse<EventoResponse> eventosAsignados(
+            @PathVariable Long id,
+            @ParameterObject
+            @PageableDefault(size = 10, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable) {
+        return service.eventosAsignados(id, pageable);
     }
 }
