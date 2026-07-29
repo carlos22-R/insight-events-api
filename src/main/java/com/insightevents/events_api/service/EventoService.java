@@ -14,9 +14,9 @@ import org.springframework.data.domain.Pageable;
  */
 public interface EventoService {
 
-    EventoResponse crear(EventoCrearRequest request);
+    EventoResponse crear(EventoCrearRequest request, String usuario);
 
-    EventoResponse actualizar(Long id, EventoActualizarRequest request);
+    EventoResponse actualizar(Long id, EventoActualizarRequest request, String usuario);
 
     EventoResponse obtenerPorId(Long id);
 
@@ -27,5 +27,5 @@ public interface EventoService {
                                           Pageable pageable);
 
     /** Borrado logico (soft delete): marca activo = false. */
-    void eliminar(Long id);
+    void eliminar(Long id, String usuario);
 }

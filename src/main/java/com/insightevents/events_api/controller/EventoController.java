@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,8 +40,10 @@ public class EventoController {
     private final EventoService service;
 
     @PostMapping
-    public ResponseEntity<EventoResponse> crear(@Valid @RequestBody EventoCrearRequest request) {
-        EventoResponse creado = service.crear(request);
+    public ResponseEntity<EventoResponse> crear(
+            @Valid @RequestBody EventoCrearRequest request,
+            @RequestHeader(value = "X-Usuario", defaultValue = "sistema") String usuario) {
+        EventoResponse creado = service.crear(request, usuario);
         return ResponseEntity.created(URI.create("/api/eventos/" + creado.id())).body(creado);
     }
 
@@ -70,14 +73,16 @@ public class EventoController {
 
     @PutMapping("/{id}")
     public EventoResponse actualizar(@PathVariable Long id,
-                                     @Valid @RequestBody EventoActualizarRequest request) {
-        return service.actualizar(id, request);
+                                     @Valid @RequestBody EventoActualizarRequest request,
+                                     @RequestHeader(value = "X-Usuario", defaultValue = "sistema") String usuario) {
+        return service.actualizar(id, request, usuario);
     }
 
     /** Borrado logico (soft delete) -> 204. */
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminar(@PathVariable Long id) {
-        service.eliminar(id);
+    public void eliminar(@PathVariable Long id,
+                         @RequestHeader(value = "X-Usuario", defaultValue = "sistema") String usuario) {
+        service.eliminar(id, usuario);
     }
 }
