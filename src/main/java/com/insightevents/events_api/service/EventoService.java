@@ -6,6 +6,7 @@ import com.insightevents.events_api.dto.EventoActualizarRequest;
 import com.insightevents.events_api.dto.EventoCrearRequest;
 import com.insightevents.events_api.dto.EventoResponse;
 import com.insightevents.events_api.dto.PaginaResponse;
+import java.time.LocalDateTime;
 import org.springframework.data.domain.Pageable;
 
 /**
@@ -21,7 +22,8 @@ public interface EventoService {
 
     /** Busqueda con filtros opcionales y paginacion (JPQL). */
     PaginaResponse<EventoResponse> buscar(Long categoriaId, EstadoEvento estado,
-                                          Prioridad prioridad, String texto,
+                                          Prioridad prioridad, LocalDateTime fechaDesde,
+                                          LocalDateTime fechaHasta, String texto,
                                           Pageable pageable);
 
     /** Borrado logico (soft delete): marca activo = false. */

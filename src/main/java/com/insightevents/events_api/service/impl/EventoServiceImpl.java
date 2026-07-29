@@ -13,6 +13,7 @@ import com.insightevents.events_api.mapper.EventoMapper;
 import com.insightevents.events_api.repository.CategoriaRepository;
 import com.insightevents.events_api.repository.EventoRepository;
 import com.insightevents.events_api.service.EventoService;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -61,12 +62,13 @@ public class EventoServiceImpl implements EventoService {
     @Override
     @Transactional(readOnly = true)
     public PaginaResponse<EventoResponse> buscar(Long categoriaId, EstadoEvento estado,
-                                                 Prioridad prioridad, String texto,
+                                                 Prioridad prioridad, LocalDateTime fechaDesde,
+                                                 LocalDateTime fechaHasta, String texto,
                                                  Pageable pageable) {
         // Normaliza texto vacio a null para que el filtro se ignore
         String textoFiltro = (texto != null && !texto.isBlank()) ? texto.trim() : null;
         Page<EventoResponse> pagina = repository
-                .buscar(categoriaId, estado, prioridad, textoFiltro, pageable)
+                .buscar(categoriaId, estado, prioridad, fechaDesde, fechaHasta, textoFiltro, pageable)
                 .map(mapper::toResponse);
         return PaginaResponse.de(pagina);
     }

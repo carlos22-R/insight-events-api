@@ -9,10 +9,12 @@ import com.insightevents.events_api.dto.PaginaResponse;
 import com.insightevents.events_api.service.EventoService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -57,9 +59,13 @@ public class EventoController {
             @RequestParam(required = false) Long categoriaId,
             @RequestParam(required = false) EstadoEvento estado,
             @RequestParam(required = false) Prioridad prioridad,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaDesde,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaHasta,
             @RequestParam(required = false) String texto,
             @PageableDefault(size = 10, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable) {
-        return service.buscar(categoriaId, estado, prioridad, texto, pageable);
+        return service.buscar(categoriaId, estado, prioridad, fechaDesde, fechaHasta, texto, pageable);
     }
 
     @PutMapping("/{id}")
