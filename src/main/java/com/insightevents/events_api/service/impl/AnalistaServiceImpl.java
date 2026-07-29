@@ -3,16 +3,15 @@ package com.insightevents.events_api.service.impl;
 import com.insightevents.events_api.domain.Analista;
 import com.insightevents.events_api.dto.AnalistaRequest;
 import com.insightevents.events_api.dto.AnalistaResponse;
-import com.insightevents.events_api.dto.EventoResponse;
+import com.insightevents.events_api.dto.EventoAsignadoResponse;
 import com.insightevents.events_api.dto.PaginaResponse;
 import com.insightevents.events_api.exception.RecursoDuplicadoException;
 import com.insightevents.events_api.exception.RecursoEnUsoException;
 import com.insightevents.events_api.exception.RecursoNoEncontradoException;
 import com.insightevents.events_api.mapper.AnalistaMapper;
-import com.insightevents.events_api.mapper.EventoMapper;
+import com.insightevents.events_api.mapper.AsignacionMapper;
 import com.insightevents.events_api.repository.AnalistaRepository;
 import com.insightevents.events_api.repository.AsignacionRepository;
-import com.insightevents.events_api.repository.EventoRepository;
 import com.insightevents.events_api.service.AnalistaService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +30,8 @@ public class AnalistaServiceImpl implements AnalistaService {
 
     private final AnalistaRepository repository;
     private final AsignacionRepository asignacionRepository;
-    private final EventoRepository eventoRepository;
     private final AnalistaMapper mapper;
-    private final EventoMapper eventoMapper;
+    private final AsignacionMapper asignacionMapper;
 
     @Override
     @Transactional
@@ -84,14 +82,14 @@ public class AnalistaServiceImpl implements AnalistaService {
 
     @Override
     @Transactional(readOnly = true)
-    public PaginaResponse<EventoResponse> eventosAsignados(Long analistaId, Pageable pageable) {
+    public PaginaResponse<EventoAsignadoResponse> eventosAsignados(Long analistaId, Pageable pageable) {
         // Validamos que el analista exista para devolver 404 si no
         if (!repository.existsById(analistaId)) {
             throw new RecursoNoEncontradoException("Analista", analistaId);
         }
-        Page<EventoResponse> pagina = eventoRepository
-                .eventosAsignadosAAnalista(analistaId, pageable)
-                .map(eventoMapper::toResponse);
+        Page<EventoAsignadoResponse> pagina = asignacionRepository
+                .asignacionesActivasDeAnalista(analistaId, pageable)
+                .map(asignacionMapper::toEventoAsignado);
         return PaginaResponse.de(pagina);
     }
 

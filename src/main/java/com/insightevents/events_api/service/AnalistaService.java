@@ -2,7 +2,7 @@ package com.insightevents.events_api.service;
 
 import com.insightevents.events_api.dto.AnalistaRequest;
 import com.insightevents.events_api.dto.AnalistaResponse;
-import com.insightevents.events_api.dto.EventoResponse;
+import com.insightevents.events_api.dto.EventoAsignadoResponse;
 import com.insightevents.events_api.dto.PaginaResponse;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +22,6 @@ public interface AnalistaService {
 
     void eliminar(Long id);
 
-    /** Eventos activos asignados a un analista, paginados. */
-    PaginaResponse<EventoResponse> eventosAsignados(Long analistaId, Pageable pageable);
+    /** Eventos activos asignados a un analista (con id de asignacion), paginados. */
+    PaginaResponse<EventoAsignadoResponse> eventosAsignados(Long analistaId, Pageable pageable);
 }

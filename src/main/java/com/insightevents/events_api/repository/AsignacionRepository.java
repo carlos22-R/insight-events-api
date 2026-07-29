@@ -5,9 +5,12 @@ import com.insightevents.events_api.domain.enums.EstadoAsignacion;
 import com.insightevents.events_api.repository.projection.CargaAnalistaProjection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.Procedure;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Repositorio de Asignacion. Incluye la llamada al stored procedure de
@@ -34,6 +37,18 @@ public interface AsignacionRepository extends JpaRepository<Asignacion, Long> {
 
     /** Todas las asignaciones de un evento (para listarlas con su id). */
     List<Asignacion> findByEventoId(Long eventoId);
+
+    /**
+     * JPQL: asignaciones activas de un analista sobre eventos activos, paginadas.
+     * Se consulta sobre Asignacion para poder exponer el id de la asignacion.
+     */
+    @Query("""
+            SELECT a FROM Asignacion a
+            WHERE a.analista.id = :analistaId
+              AND a.estado = com.insightevents.events_api.domain.enums.EstadoAsignacion.ACTIVA
+              AND a.evento.activo = true
+            """)
+    Page<Asignacion> asignacionesActivasDeAnalista(@Param("analistaId") Long analistaId, Pageable pageable);
 
     /**
      * SQL nativo: carga de trabajo por analista (asignaciones activas).

@@ -2,7 +2,7 @@ package com.insightevents.events_api.controller;
 
 import com.insightevents.events_api.dto.AnalistaRequest;
 import com.insightevents.events_api.dto.AnalistaResponse;
-import com.insightevents.events_api.dto.EventoResponse;
+import com.insightevents.events_api.dto.EventoAsignadoResponse;
 import com.insightevents.events_api.dto.PaginaResponse;
 import com.insightevents.events_api.service.AnalistaService;
 import jakarta.validation.Valid;
@@ -64,12 +64,12 @@ public class AnalistaController {
         service.eliminar(id);
     }
 
-    /** Eventos activos asignados a un analista (paginado). */
+    /** Eventos activos asignados a un analista (con id de asignacion, paginado). */
     @GetMapping("/{id}/eventos")
-    public PaginaResponse<EventoResponse> eventosAsignados(
+    public PaginaResponse<EventoAsignadoResponse> eventosAsignados(
             @PathVariable Long id,
             @ParameterObject
-            @PageableDefault(size = 10, sort = "fecha", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 10, sort = "fechaAsignacion", direction = Sort.Direction.DESC) Pageable pageable) {
         return service.eventosAsignados(id, pageable);
     }
 }
